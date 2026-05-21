@@ -1,11 +1,19 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useSearchParams,
+} from "next/navigation";
+
 import axios from "axios";
 import Navbar from "@/components/Navbar";
 
-export default function CommunityFeedPage() {
+function CommunityFeedContent() {
 
   const searchParams =
     useSearchParams();
@@ -13,16 +21,9 @@ export default function CommunityFeedPage() {
   const slug =
     searchParams.get("slug");
 
-  const [loading, setLoading] =
-    useState(true);
-
   const [community, setCommunity] =
     useState<any>(null);
 
-  const [posts, setPosts] =
-    useState<any[]>([]);
-
-  // FETCH COMMUNITY
   useEffect(() => {
 
     if (slug) {
@@ -32,7 +33,8 @@ export default function CommunityFeedPage() {
 
   }, [slug]);
 
-  const fetchCommunity = async () => {
+  const fetchCommunity =
+    async () => {
 
     try {
 
@@ -41,40 +43,19 @@ export default function CommunityFeedPage() {
           `/api/community/${slug}`
         );
 
-      setCommunity(
-        response.data.community
-      );
-
-      setPosts(
-        response.data.posts
-      );
+      setCommunity(response.data);
 
     } catch (error) {
 
       console.log(error);
-
-    } finally {
-
-      setLoading(false);
     }
   };
 
-  // LOADING
-  if (loading) {
-
-    return (
-      <div className="p-10 text-black">
-        Loading...
-      </div>
-    );
-  }
-
-  // NO COMMUNITY
   if (!community) {
 
     return (
-      <div className="p-10 text-red-500">
-        Community not found
+      <div className="p-10">
+        Loading...
       </div>
     );
   }
@@ -84,17 +65,17 @@ export default function CommunityFeedPage() {
 
       <Navbar />
 
-      <div className="max-w-5xl mx-auto mt-10 px-6">
+      <div className="max-w-4xl mx-auto mt-10 px-6">
 
-        {/* HEADER */}
-        <div className="bg-white p-8 rounded-2xl shadow-lg mb-10">
+        {/* COMMUNITY INFO */}
+        <div className="bg-white p-8 rounded-2xl shadow mb-10">
 
-          <h1 className="text-5xl font-bold text-black mb-4">
-            r/{community.slug}
+          <h1 className="text-6xl font-bold text-black mb-4">
+            r/{community.community.slug}
           </h1>
 
-          <p className="text-gray-600 text-lg">
-            {community.name}
+          <p className="text-gray-600 text-2xl">
+            {community.community.name}
           </p>
 
         </div>
@@ -102,7 +83,8 @@ export default function CommunityFeedPage() {
         {/* POSTS */}
         <div className="space-y-6">
 
-          {posts.map((post) => (
+          {community.posts.map(
+            (post: any) => (
 
             <div
               key={post.id}
@@ -110,24 +92,20 @@ export default function CommunityFeedPage() {
             >
 
               <a
-                href={`/post/${post.id}?title=${encodeURIComponent(
-                  post.title
-                )}&content=${encodeURIComponent(
-                  post.content
-                )}`}
+                href={`/post/${post.id}`}
               >
 
-                <h2 className="text-3xl font-bold text-black mb-4 hover:text-orange-500">
+                <h2 className="text-4xl font-bold text-black mb-4 hover:text-orange-500">
                   {post.title}
                 </h2>
 
               </a>
 
-              <p className="text-gray-700 mb-5">
+              <p className="text-gray-700 text-lg mb-5">
                 {post.content}
               </p>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-gray-500">
                 Community post
               </p>
 
@@ -139,5 +117,23 @@ export default function CommunityFeedPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function CommunityFeedPage() {
+
+  return (
+
+    <Suspense
+      fallback={
+        <div className="p-10">
+          Loading...
+        </div>
+      }
+    >
+
+      <CommunityFeedContent />
+
+    </Suspense>
   );
 }
